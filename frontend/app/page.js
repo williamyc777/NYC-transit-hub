@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:5000"
+).replace(/\/$/, "");
+
 function getLineColor(route) {
   const map = {
     "1": "#EE352E",
@@ -257,12 +261,22 @@ export default function HomePage() {
       try {
         setError("");
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/transit/status`
-        );
+        const res = await fetch(`${API_BASE_URL}/api/transit/status`);
 
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+          let details = "";
+          try {
+            const errorJson = await res.json();
+            details = errorJson.details || errorJson.error || "";
+          } catch {
+            details = "";
+          }
+
+          throw new Error(
+            details
+              ? `Transit API returned HTTP ${res.status}: ${details}`
+              : `Transit API returned HTTP ${res.status}`
+          );
         }
 
         const json = await res.json();
@@ -351,6 +365,10 @@ export default function HomePage() {
         <div style={{ color: "#dc2626", marginTop: "16px" }}>
           Error: {error}
         </div>
+        <p style={{ color: "#6b7280", marginTop: "12px", maxWidth: "640px" }}>
+          Make sure the Flask backend is running at {API_BASE_URL} and the MTA
+          feed URLs are configured in the backend environment.
+        </p>
       </main>
     );
   }

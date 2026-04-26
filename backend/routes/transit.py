@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, current_app
+from flask import Blueprint, current_app, jsonify
 from services.mta_alerts_service import fetch_transit_status
 
 transit_bp = Blueprint("transit", __name__)
@@ -15,12 +15,10 @@ def health_check():
 @transit_bp.route("/status", methods=["GET"])
 def service_status():
     try:
-        print("DEBUG subway url:", current_app.config["MTA_SUBWAY_ALERTS_URL"])
-        print("DEBUG bus url:", current_app.config["MTA_BUS_ALERTS_URL"])
-
         data = fetch_transit_status(
             current_app.config["MTA_SUBWAY_ALERTS_URL"],
-            current_app.config["MTA_BUS_ALERTS_URL"]
+            current_app.config["MTA_BUS_ALERTS_URL"],
+            current_app.config["MTA_API_KEY"]
         )
         return jsonify(data)
     except Exception as e:
@@ -28,10 +26,3 @@ def service_status():
             "error": "Failed to fetch MTA transit status",
             "details": str(e)
         }), 500
-
-@transit_bp.route("/api/transit/status", methods=["GET"])
-def get_transit_status():
-    return jsonify(fetch_transit_status(
-        current_app.config["MTA_SUBWAY_ALERTS_URL"],
-        current_app.config["MTA_BUS_ALERTS_URL"]
-    ))        

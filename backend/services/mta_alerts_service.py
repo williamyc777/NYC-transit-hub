@@ -1,5 +1,4 @@
 import time
-from unittest import result
 import requests
 from google.transit import gtfs_realtime_pb2
 
@@ -34,8 +33,9 @@ def _is_alert_active(alert, now_ts):
     return False
 
 
-def _load_feed(url):
-    resp = requests.get(url, timeout=20)
+def _load_feed(url, api_key=None):
+    headers = {"x-api-key": api_key} if api_key else None
+    resp = requests.get(url, headers=headers, timeout=20)
     resp.raise_for_status()
 
     feed = gtfs_realtime_pb2.FeedMessage()
@@ -43,11 +43,11 @@ def _load_feed(url):
     return feed
 
 
-def fetch_subway_alerts(url):
+def fetch_subway_alerts(url, api_key=None):
     if not url:
         raise ValueError("MTA_SUBWAY_ALERTS_URL is not configured")
 
-    feed = _load_feed(url)
+    feed = _load_feed(url, api_key)
     now_ts = int(time.time())
     subway_map = {}
 
@@ -89,11 +89,11 @@ def fetch_subway_alerts(url):
     return result
 
 
-def fetch_bus_alerts(url):
+def fetch_bus_alerts(url, api_key=None):
     if not url:
         raise ValueError("MTA_BUS_ALERTS_URL is not configured")
 
-    feed = _load_feed(url)
+    feed = _load_feed(url, api_key)
     now_ts = int(time.time())
     bus_map = {}
 
@@ -122,10 +122,10 @@ def fetch_bus_alerts(url):
                 }
 
     COMMON_BUS_ROUTES = [
-    "M15", "M14", "M7", "M5", "M101",
-    "B44", "B41", "B62",
-    "Q44", "Q58", "Q60",
-    "BX12", "BX6"
+        "M15", "M14", "M7", "M5", "M101",
+        "B44", "B41", "B62",
+        "Q44", "Q58", "Q60",
+        "BX12", "BX6",
     ]
 
     result = []
@@ -145,13 +145,12 @@ def fetch_bus_alerts(url):
             result.append(data)
 
     result.sort(key=lambda x: (x["status"] != "ALERT", x["route"]))
-    #print("DEBUG bus routes:", [item["route"] + ":" + item["status"] for item in result[:20]])
     return result
 
 
-def fetch_transit_status(subway_url, bus_url):
-    subway = fetch_subway_alerts(subway_url)
-    bus = fetch_bus_alerts(bus_url)
+def fetch_transit_status(subway_url, bus_url, api_key=None):
+    subway = fetch_subway_alerts(subway_url, api_key)
+    bus = fetch_bus_alerts(bus_url, api_key)
 
     summary = {
         "subway_total": len(subway),

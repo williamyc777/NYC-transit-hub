@@ -9,3 +9,4 @@ class Config:
     PORT = int(os.getenv("PORT", 5000))
     MTA_SUBWAY_ALERTS_URL = os.getenv("MTA_SUBWAY_ALERTS_URL")
     MTA_BUS_ALERTS_URL = os.getenv("MTA_BUS_ALERTS_URL")
+    MTA_API_KEY = os.getenv("MTA_API_KEY")
